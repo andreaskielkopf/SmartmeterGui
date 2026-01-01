@@ -11,7 +11,10 @@ import java.text.ParseException;
 
 import javax.swing.*;
 import javax.swing.JFormattedTextField.AbstractFormatter;
+import javax.swing.border.TitledBorder;
 
+import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
+import de.uhingen.kielkopf.andreas.smartmetergui.data.Tag;
 import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
 
 /**
@@ -19,27 +22,31 @@ import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
  *
  */
 public class Manage extends JPanel {
-   private static final long   serialVersionUID         =1L;
-   private JPanel              panel;
-   private JPanel              knoepfe;
-   private JButton             btn_load;
-   private JButton             btn_save;
-   private JButton             btn_read;
-   private JButton             btn_delete;
-   private JPanel              config;
-   private JPanel              scroller;
-   private JScrollPane         scrollPane;
-   private JList               list;
-   private JFormattedTextField field_IP;
-   private JLabel              lbl_IP;
-   private JLabel              lbl_Name;
-   private JTextField          field_Name;
-   private JLabel              lbl_Path;
-   private JTextField          field_Path;
-   private JButton             btn_Ping;
-   private JButton             btn_Test;
+   private static final long     serialVersionUID         =1L;
+   private JPanel                panel;
+   private JPanel                knoepfe;
+   private JButton               btn_load;
+   private JButton               btn_save;
+   private JButton               btn_read;
+   private JButton               btn_delete;
+   private JPanel                config;
+   private JPanel                scroller;
+   private JScrollPane           scrollPane;
+   private JList<Tag>            list;
+   private JFormattedTextField   field_IP;
+   private JLabel                lbl_IP;
+   private JLabel                lbl_Name;
+   private JTextField            field_Name;
+   private JLabel                lbl_Path;
+   private JTextField            field_Path;
+   private JButton               btn_Ping;
+   private JButton               btn_Test;
+   private Smartmeter            smartmeter;
    /** Brauchts um die Buttons rücksetzen zu können */
-   static public Color         DEFAULT_BUTTON_BACKGROUND=Color.CYAN;
+   static public Color           DEFAULT_BUTTON_BACKGROUND=Color.CYAN;
+   private JLabel                lbl_Info;
+   private JPanel                panel_1;
+   private DefaultListModel<Tag> listModel;
    /**
     * Create the panel.
     */
@@ -91,6 +98,17 @@ public class Manage extends JPanel {
    private JButton getBtn_read() {
       if (btn_read == null) {
          btn_read=new JButton("read Smartmeter");
+         btn_read.addActionListener(_ -> {
+            if (smartmeter instanceof Smartmeter s) {
+               Thread t=new Thread(() -> {
+                  final
+                  DefaultListModel<Tag> jListModel=getListModel();
+                  s.read(jListModel);
+               });
+               t.setDaemon(true);
+               t.start();
+            }
+         });
          btn_read.setToolTipText("lies Daten vonm Smartmeter");
       }
       return btn_read;
@@ -123,6 +141,7 @@ public class Manage extends JPanel {
          scroller=new JPanel();
          scroller.setLayout(new BorderLayout(0, 0));
          scroller.add(getScrollPane(), BorderLayout.CENTER);
+         scroller.add(getPanel_1(), BorderLayout.SOUTH);
       }
       return scroller;
    }
@@ -132,11 +151,24 @@ public class Manage extends JPanel {
       }
       return scrollPane;
    }
-   private JList getList() {
+   private JList<Tag> getList() {
       if (list == null) {
-         list=new JList();
+         list=new JList<>(getListModel());
+         list.setFont(new Font("Noto Sans", Font.BOLD, 14));
+         list.setBorder(new TitledBorder(null, "Daten vom Smartmeter", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+         list.setVisibleRowCount(-1);
+         list.setToolTipText("Alle bisher vorhandenen Daten vom Smartmeter");
+         list.setLayoutOrientation(JList.VERTICAL_WRAP);
       }
       return list;
+   }
+   /**
+    * @return
+    */
+   private DefaultListModel<Tag> getListModel() {
+      if (listModel == null)
+         listModel=new DefaultListModel<Tag>();
+      return listModel;
    }
    /**
     * IP-Feld mit grober Prüfung der Eingabe
@@ -151,7 +183,7 @@ public class Manage extends JPanel {
                getBtn_Ping().setBackground(DEFAULT_BUTTON_BACKGROUND);
                if (value instanceof InetAddress inet) {
                   getFormattedTextField().setForeground(Color.BLUE);
-                  System.out.println(inet.toString());
+//                  System.out.println(inet.toString());
                   return inet.getHostAddress();
                }
                getFormattedTextField().setForeground(Color.BLACK);
@@ -161,7 +193,7 @@ public class Manage extends JPanel {
             public Object stringToValue(String text) throws ParseException {
                try {
                   getBtn_Ping().setBackground(DEFAULT_BUTTON_BACKGROUND);
-                  System.out.println(InetAddress.getByName(text).toString());
+//                  System.out.println(InetAddress.getByName(text).toString());
                   getFormattedTextField().setForeground(Color.BLACK);
                   getBtn_Ping().setEnabled(true);
                   return InetAddress.getByName(text);
@@ -231,9 +263,39 @@ public class Manage extends JPanel {
    private JButton getBtn_Test() {
       if (btn_Test == null) {
          btn_Test=new JButton("test");
-         btn_Test.addActionListener(_ -> Client.testSmartmeter(getField_IP(), getBtn_Test()));
+         btn_Test.addActionListener(_ -> Client.testSmartmeter(getField_IP(), getBtn_Test(), this));
          btn_Test.setToolTipText("teste ob das ein Smartmeter ist");
       }
       return btn_Test;
+   }
+   /**
+    * @param smartmeter
+    */
+   public void setSmartmeter(Smartmeter smartmeter_) {
+      if (smartmeter_ instanceof Smartmeter s) {
+         smartmeter=s;
+         smartmeter.setInfoline(getLbl_Info());
+         getField_Name().setText(smartmeter_.getName());
+         getBtn_read().setEnabled(true);
+      } else {
+         getBtn_read().setEnabled(false);
+         getField_Name().setText("------------");
+         smartmeter=null;
+      }
+   }
+   private JLabel getLbl_Info() {
+      if (lbl_Info == null) {
+         lbl_Info=new JLabel("--");
+         lbl_Info.setHorizontalAlignment(SwingConstants.LEFT);
+      }
+      return lbl_Info;
+   }
+   private JPanel getPanel_1() {
+      if (panel_1 == null) {
+         panel_1=new JPanel();
+         panel_1.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+         panel_1.add(getLbl_Info());
+      }
+      return panel_1;
    }
 }

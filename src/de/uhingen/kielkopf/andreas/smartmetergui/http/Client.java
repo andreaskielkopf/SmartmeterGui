@@ -9,9 +9,11 @@ import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpRequest.Builder;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
 
 import de.uhingen.kielkopf.andreas.smartmetergui.Manage;
+import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
 
 /**
  * Dienstleister, der den netzwerkverkehr übernimmt
@@ -33,15 +35,12 @@ public class Client {
       // TODO Auto-generated constructor stub
    }
    /**
-    * Gibt eine Suche in Auftrag und registriert einen callback sobald was gefunden wird
-    * 
-    * @param cb_
-    * @return leere Liste, die mit callbacks gefüllt wird
+    * @param ip
+    * @throws URISyntaxException
     */
-   // public static ArrayList<Smartmeter> search(CallBack cb_) {
-   // get().cb=cb_;
-   // return new ArrayList<>();
-   // }
+   public Client(InetAddress ip) throws URISyntaxException {
+      setIP(ip);
+   }
    /**
     * Testet diese Ip und informiert dann die GUI Es wir inkaufgenommen, dass die GUI kurz "hängt"
     * 
@@ -82,15 +81,21 @@ public class Client {
     * Es wir getestet, ob das ein Smartmeter ist (anhand der Antworten) Es wir inkaufgenommen, dass die GUI kurz "hängt"
     * 
     * @param field_IP
+    * @param manage
     * @param btn_test
     * @return
     */
-   public static void testSmartmeter(JFormattedTextField field_IP, JButton btn_Test) {
+   public static void testSmartmeter(JFormattedTextField field_IP, JButton btn_Test, Manage manage) {
       if (field_IP.getValue() instanceof InetAddress ip) {
          btn_Test.setBackground(Color.YELLOW);
          if (isSmartmeter(ip)) {
             btn_Test.setBackground(Color.GREEN);
             System.out.println("Smartmeter bei " + ip + " gefunden");
+            try {
+               manage.setSmartmeter(new Smartmeter(ip));
+            } catch (URISyntaxException e) {
+               e.printStackTrace();
+            }
          } else {
             btn_Test.setBackground(Color.RED);
             System.err.println("KEIN Smartmeter bei " + ip + " gefunden");
@@ -135,7 +140,7 @@ public class Client {
     * @throws InterruptedException
     * @throws IOException
     */
-   private String anfrage(String pfad) throws IOException, InterruptedException {
+   public String anfrage(String pfad) throws IOException, InterruptedException {
       URI uri=basisUri.resolve(pfad);
       // System.out.println(uri);
       HttpRequest request=builder.uri(uri).build();

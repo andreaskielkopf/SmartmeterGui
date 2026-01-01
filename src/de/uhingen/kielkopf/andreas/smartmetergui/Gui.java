@@ -5,12 +5,7 @@ package de.uhingen.kielkopf.andreas.smartmetergui;
 
 import java.awt.*;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.JLabel;
-import javax.swing.SwingConstants;
-import javax.swing.JTabbedPane;
+import javax.swing.*;
 
 /**
  * @author Andreas Kielkopf
@@ -54,14 +49,14 @@ public class Gui {
       frmSmartmetergui.setTitle("Smartmeter-Gui");
       frmSmartmetergui.setBounds(100, 100, 800, 650);
       frmSmartmetergui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-      frmSmartmetergui.getContentPane().add(getPanel(), BorderLayout.NORTH);
+      frmSmartmetergui.getContentPane().add(getPanel(), BorderLayout.CENTER);
       frmSmartmetergui.getContentPane().add(getInfo(), BorderLayout.SOUTH);
    }
    private JPanel getPanel() {
       if (panel == null) {
          panel=new JPanel();
          panel.setLayout(new BorderLayout(0, 0));
-         panel.add(getTabbedPane(), BorderLayout.NORTH);
+         panel.add(getTabbedPane(), BorderLayout.CENTER);
       }
       return panel;
    }
