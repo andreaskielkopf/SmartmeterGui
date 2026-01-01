@@ -12,30 +12,34 @@ import java.text.ParseException;
 import javax.swing.*;
 import javax.swing.JFormattedTextField.AbstractFormatter;
 
+import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
+
 /**
  * @author Andreas Kielkopf
  *
  */
 public class Manage extends JPanel {
-   private static final long serialVersionUID=1L;
-   private JPanel            panel;
-   private JPanel            knoepfe;
-   private JButton           btn_load;
-   private JButton           btn_save;
-   private JButton           btn_read;
-   private JButton           btn_delete;
-   private JPanel            config;
-   private JPanel            scroller;
-   private JScrollPane       scrollPane;
-   private JList             list;
-   private JTextField        field_IP;
-   private JLabel            lbl_IP;
-   private JLabel            lbl_Name;
-   private JTextField        field_Name;
-   private JLabel            lbl_Path;
-   private JTextField        field_Path;
-   private JButton           btn_Ping;
-   private JButton           btn_test;
+   private static final long   serialVersionUID         =1L;
+   private JPanel              panel;
+   private JPanel              knoepfe;
+   private JButton             btn_load;
+   private JButton             btn_save;
+   private JButton             btn_read;
+   private JButton             btn_delete;
+   private JPanel              config;
+   private JPanel              scroller;
+   private JScrollPane         scrollPane;
+   private JList               list;
+   private JFormattedTextField field_IP;
+   private JLabel              lbl_IP;
+   private JLabel              lbl_Name;
+   private JTextField          field_Name;
+   private JLabel              lbl_Path;
+   private JTextField          field_Path;
+   private JButton             btn_Ping;
+   private JButton             btn_Test;
+   /** Brauchts um die Buttons rücksetzen zu können */
+   static public Color         DEFAULT_BUTTON_BACKGROUND=Color.CYAN;
    /**
     * Create the panel.
     */
@@ -108,7 +112,7 @@ public class Manage extends JPanel {
          config.add(getBtn_Ping());
          config.add(getLbl_Name());
          config.add(getField_Name());
-         config.add(getBtn_test());
+         config.add(getBtn_Test());
          config.add(getLbl_Path());
          config.add(getField_Path());
       }
@@ -139,22 +143,24 @@ public class Manage extends JPanel {
     * 
     * @return
     */
-   private JTextField getField_IP() {
+   private JFormattedTextField getField_IP() {
       if (field_IP == null) {
          AbstractFormatter formatter=new JFormattedTextField.AbstractFormatter() {
             @Override
             public String valueToString(Object value) throws ParseException {
+               getBtn_Ping().setBackground(DEFAULT_BUTTON_BACKGROUND);
                if (value instanceof InetAddress inet) {
                   getFormattedTextField().setForeground(Color.BLUE);
                   System.out.println(inet.toString());
                   return inet.getHostAddress();
                }
-               getFormattedTextField().setForeground(Color.GRAY);
+               getFormattedTextField().setForeground(Color.BLACK);
                return null;
             }
             @Override
             public Object stringToValue(String text) throws ParseException {
                try {
+                  getBtn_Ping().setBackground(DEFAULT_BUTTON_BACKGROUND);
                   System.out.println(InetAddress.getByName(text).toString());
                   getFormattedTextField().setForeground(Color.BLACK);
                   getBtn_Ping().setEnabled(true);
@@ -164,7 +170,7 @@ public class Manage extends JPanel {
                   getBtn_Ping().setEnabled(false);
                   System.err.println(e.getMessage());
                }
-               throw new ParseException("keine passende IP", text.length() - 1);
+               throw new ParseException("keine passende IP", text.length());
             }
          };
          field_IP=new JFormattedTextField(formatter);
@@ -216,15 +222,18 @@ public class Manage extends JPanel {
    private JButton getBtn_Ping() {
       if (btn_Ping == null) {
          btn_Ping=new JButton("ping");
+         DEFAULT_BUTTON_BACKGROUND=btn_Ping.getBackground();
+         btn_Ping.addActionListener(_ -> Client.ping(getField_IP(), getBtn_Ping(), getBtn_Test()));
          btn_Ping.setToolTipText("teste ob diese IP auf Ping antwortet");
       }
       return btn_Ping;
    }
-   private JButton getBtn_test() {
-      if (btn_test == null) {
-         btn_test=new JButton("test");
-         btn_test.setToolTipText("teste ob das ein Smartmeter ist");
+   private JButton getBtn_Test() {
+      if (btn_Test == null) {
+         btn_Test=new JButton("test");
+         btn_Test.addActionListener(_ -> Client.testSmartmeter(getField_IP(), getBtn_Test()));
+         btn_Test.setToolTipText("teste ob das ein Smartmeter ist");
       }
-      return btn_test;
+      return btn_Test;
    }
 }
