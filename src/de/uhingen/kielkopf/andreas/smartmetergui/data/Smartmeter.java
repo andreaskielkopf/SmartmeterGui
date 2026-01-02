@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import javax.swing.*;
 
+import de.uhingen.kielkopf.andreas.smartmetergui.Manage;
 import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
 
 /**
@@ -25,7 +26,7 @@ public class Smartmeter implements Serializable {
    private Client            client;
    private String            name;
    private TreeSet<Tag>      speicher;
-   private JLabel            infoline;
+   private Manage            manage;
    /**
     * kompletter Datensatz eines Smartmrters
     * 
@@ -56,42 +57,38 @@ public class Smartmeter implements Serializable {
    /**
     * @param jListModel
     */
-   public void read(DefaultListModel<Tag> jListModel) {
-      try {
-         setInfo("start to read " + toString());
-         Instant jetzt=Instant.now();
-         int year=jetzt.atOffset(ZoneOffset.UTC).getYear();
-         // String erg;
-         for (int jahr=year - 10; jahr <= year; jahr++) {
+   public void read() {
+      if (manage instanceof Manage m && m.getListModel() instanceof DefaultListModel<Tag> lm) {
+         Thread t=new Thread(() -> {
             try {
-               if (getData("data/" + jahr) instanceof String[] monate)
-                  for (String monat:monate) {
-                     if (getData("data/" + jahr + "/" + monat) instanceof String[] tage)
-                        for (String tag:tage) {
-                           if (getData("data/" + jahr + "/" + monat + "/" + tag) instanceof String[] stunden)
-                              for (String stunde:stunden) {
-                                 if (getData("data/" + jahr + "/" + monat + "/" + tag + "/"
-                                          + stunde) instanceof String[] minuten) {
-                                    // System.out.println(Arrays.asList(minuten));
-                                    if (eintragen(jahr, monat, tag, stunde, minuten) instanceof Tag t) {
-                                       System.out.println("neu: " + t);
-                                       if (jListModel instanceof DefaultListModel<Tag> jlt)
-                                          SwingUtilities.invokeLater(() -> jlt.addElement(t));
-                                    }
-                                 }
-                              }
-                        }
-                  }
-               else {
-                  setInfo(jahr + ":");
-               }
-            } catch (IOException e) {
+               read(lm);
+            } catch (InterruptedException e) {
                System.err.println(e.getMessage());
             }
-         }
-      } catch (InterruptedException e) {
-         e.printStackTrace();
+         });
+         t.setDaemon(true);
+         t.start();
       }
+   }
+   private void read(DefaultListModel<Tag> jListModel) throws InterruptedException {
+      // setInfo("start to read " + toString());
+      int year=Instant.now().atOffset(ZoneOffset.UTC).getYear();
+      for (int jahr=year - 10; jahr <= year; jahr++)
+         try {
+            if (getAntwort(jahr) instanceof String[] monate)
+               for (String monat:monate)
+                  if (getAntwort(jahr, monat) instanceof String[] tage)
+                     for (String tag:tage)
+                        if (getAntwort(jahr, monat, tag) instanceof String[] stunden)
+                           for (String stunde:stunden)
+                              if (getAntwort(jahr, monat, tag, stunde) instanceof String[] minuten) {
+                                 if (eintragen(jahr, monat, tag, stunde, minuten) instanceof Tag t
+                                          && jListModel instanceof DefaultListModel<Tag> jlt)
+                                    SwingUtilities.invokeLater(() -> jlt.addElement(t));
+                              }
+         } catch (IOException e) {
+            System.err.println(e.getMessage());
+         }
    }
    /**
     * @param jahr
@@ -122,15 +119,19 @@ public class Smartmeter implements Serializable {
       } catch (NumberFormatException _) { /* */ }
       return null;
    }
-   private String[] getData(String frage) throws IOException, InterruptedException {
+   private String[] getAntwort(int j, String... m) throws IOException, InterruptedException {
+      StringBuilder frage=new StringBuilder("data/").append(j);
+      for (String string:m)
+         frage.append("/").append(string);
       Thread.sleep(50);// maximal alle 50ms eine Anfrage starten
-      if (client.anfrage(frage) instanceof String erg) {
-         String[] array=erg.split("[\\]\\[]");
-         if (array.length > 2 & !array[1].isBlank()) {
-            if (frage.length() <= 15)
-               setInfo(frage + "  :  " + array[1]);
-            return array[1].split(",");
-         }
+      setInfo(frage.toString());
+      if (client.anfrage(frage.toString()) instanceof String erg //
+               && erg.split("[\\]\\[]") instanceof String[] array //
+               && array.length > 2 //
+               && !array[1].isBlank()) {
+         if (frage.length() <= 15)
+            setInfo(frage.toString() + "  :  " + array[1]);
+         return array[1].split(",");
       }
       return null;
    }
@@ -138,14 +139,15 @@ public class Smartmeter implements Serializable {
     * @param string
     */
    private void setInfo(String string) {
-      if (infoline instanceof JLabel info)
+      if (manage instanceof Manage m && m.getLbl_Info() instanceof JLabel info)
          SwingUtilities.invokeLater(() -> info.setText(string));
    }
    /**
     * @param lbl_Info
     */
-   public void setInfoline(JLabel lbl_Info) {
-      infoline=lbl_Info;
+   public void setManage(Manage manage_) {
+      if (manage_ instanceof Manage m)
+         manage=m;
    }
    @Override
    public String toString() {
