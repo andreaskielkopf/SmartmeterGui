@@ -9,8 +9,7 @@ import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpRequest.Builder;
 
-import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
+import javax.swing.*;
 
 import de.uhingen.kielkopf.andreas.smartmetergui.Manage;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
@@ -22,10 +21,8 @@ import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
  *
  */
 public class Client {
-   // private CallBack cb;
    // Fensterposition x;
    static private HttpClient client;   // gemeinsam
-   // private URI uri;
    static private Builder    builder;  // gemeinsam
    private URI               basisUri; // je client
    /**
@@ -42,39 +39,47 @@ public class Client {
       setIP(ip);
    }
    /**
-    * Testet diese Ip und informiert dann die GUI Es wir inkaufgenommen, dass die GUI kurz "hängt"
+    * Testet diese Ip und informiert dann die GUI
     * 
-    * @param field_IP
-    * @param btn_Ping
-    * @param btn_Test
+    * @param manage
     * @return
     */
-   public static void ping(JFormattedTextField field_IP, JButton btn_Ping, JButton btn_Test) {
-      if (field_IP.getValue() instanceof InetAddress ip) {
-         try {
-            field_IP.setForeground(Color.ORANGE);
-            btn_Ping.setBackground(Color.YELLOW);
-            btn_Test.setEnabled(false);
-            // mit der IP eine Anfrage starten und wenn die Antwort kommt:
-            if (ip.isReachable(5_000)) {
-               field_IP.setForeground(Color.GREEN.darker());
-               btn_Ping.setBackground(Color.GREEN);
-               btn_Test.setEnabled(true);
-               System.out.println("Ping " + ip + " erfolgreich");
-            } else {
-               field_IP.setForeground(Color.RED);
-               btn_Ping.setBackground(Color.RED);
-               System.err.println("Ping " + ip + " erfolglos");
-            }
-         } catch (IOException e) {
-            System.err.println(e.toString());
-            e.printStackTrace();
+   public static void ping(Manage manage) {
+      // System.out.println(manage);
+      if (manage instanceof Manage m) {
+         JFormattedTextField fIP=m.getField_IP();
+         JButton bPing=m.getBtn_Ping();
+         JButton bTest=m.getBtn_Test();
+         if (fIP.getValue() instanceof InetAddress ip) {
+            fIP.setForeground(Color.ORANGE);
+            bPing.setBackground(Color.YELLOW);
+            bTest.setEnabled(false);
+            Thread t=new Thread(() -> {
+               try { // mit der IP eine Anfrage starten und wenn die Antwort kommt:
+                  final boolean reachable=ip.isReachable(5_000);
+                  SwingUtilities.invokeLater(() -> {
+                     if (reachable) {
+                        fIP.setForeground(Color.GREEN.darker());
+                        bPing.setBackground(Color.GREEN);
+                        bTest.setEnabled(true);
+                        System.out.println("Ping " + ip + " erfolgreich");
+                     } else {
+                        fIP.setForeground(Color.RED);
+                        bPing.setBackground(Color.RED);
+                        System.err.println("Ping " + ip + " erfolglos");
+                     }
+                  });
+               } catch (IOException e) {
+                  System.err.println(e.toString());
+               }
+            });
+            t.setDaemon(true);
+            t.start();
+         } else {
+            bPing.setBackground(Manage.DEFAULT_BUTTON_BACKGROUND);
+            bPing.setEnabled(false);
+            bTest.setEnabled(false);
          }
-      } else {
-         // field_IP.setForeground(Color.RED);
-         btn_Ping.setBackground(Manage.DEFAULT_BUTTON_BACKGROUND);
-         btn_Ping.setEnabled(false);
-         btn_Test.setEnabled(false);
       }
    }
    /**
@@ -151,5 +156,43 @@ public class Client {
          return "";
       }
       return response.body();
+   }
+   /**
+    * @return
+    */
+   public static void test(Manage manage) {
+      // System.out.println(manage);
+      if (manage instanceof Manage m) {
+         JButton bTest=m.getBtn_Test();
+         if (m.getField_IP().getValue() instanceof InetAddress ip) {
+            bTest.setBackground(Color.YELLOW);
+            Thread t=new Thread(() -> {
+               // try {
+               boolean isSmartmeter=isSmartmeter(ip);
+               SwingUtilities.invokeLater(() -> {
+                  try {
+                     if (isSmartmeter) {
+                        bTest.setBackground(Color.GREEN);
+                        System.out.println("Smartmeter bei " + ip + " gefunden");
+                        m.setSmartmeter(new Smartmeter(ip));
+                     } else {
+                        bTest.setBackground(Color.RED);
+                        System.err.println("KEIN Smartmeter bei " + ip + " gefunden");
+                     }
+                  } catch (URISyntaxException e) {
+                     System.err.println(e.getMessage());
+                  }
+               });
+               // } catch (InterruptedException e) {
+               // System.err.println(e.getMessage());
+               // }
+            });
+            t.setDaemon(true);
+            t.start();
+         } else {
+            bTest.setBackground(Manage.DEFAULT_BUTTON_BACKGROUND);
+            bTest.setEnabled(false);
+         }
+      }
    }
 }
