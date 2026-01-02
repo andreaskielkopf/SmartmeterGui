@@ -18,7 +18,6 @@ public class Gui {
    private JTabbedPane tabbedPane;
    private Manage      manage;
    private Display     display;
-   private JPanel      panel_3;
    /**
     * Launch the application.
     */
@@ -62,7 +61,7 @@ public class Gui {
    }
    private JLabel getInfo() {
       if (info == null) {
-         info=new JLabel("info");
+         info=new JLabel("Programm um Messmodule am Smartmeter auszulesen. Siehe https://github.com/andreaskielkopf");
          info.setFont(new Font("Noto Sans", Font.PLAIN, 14));
          info.setHorizontalAlignment(SwingConstants.CENTER);
       }
@@ -73,7 +72,6 @@ public class Gui {
          tabbedPane=new JTabbedPane(JTabbedPane.TOP);
          tabbedPane.addTab(getManage().getName(), getManage());
          tabbedPane.addTab(getDisplay().getName(), getDisplay());
-         tabbedPane.addTab("New tab", null, getPanel_3(), null);
       }
       return tabbedPane;
    }
@@ -88,11 +86,5 @@ public class Gui {
          display=new Display();
       }
       return display;
-   }
-   private JPanel getPanel_3() {
-      if (panel_3 == null) {
-         panel_3=new JPanel();
-      }
-      return panel_3;
    }
 }
