@@ -34,7 +34,7 @@ public class Tag implements Serializable, Comparable<Tag> {
       throw new NumberFormatException("Kann keinen Tag mit " + tagName + " erzeugen");
    }
    // Instant punkt;
-   TreeMap<Integer, Stunde> stunden;
+   private TreeMap<Integer, Stunde> stunden;
    @Override
    public int compareTo(Tag o) {
       if (o instanceof Tag other)
@@ -58,5 +58,11 @@ public class Tag implements Serializable, Comparable<Tag> {
       sb.append("] ");
       // sb.append(stunden.size());
       return sb.toString();
+   }
+   /**
+    * @return
+    */
+   public boolean istLeer() {
+      return stunden.isEmpty();
    }
 }
