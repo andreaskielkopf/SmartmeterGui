@@ -6,7 +6,7 @@ package de.uhingen.kielkopf.andreas.smartmetergui;
 import java.awt.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.ParseException;
 
 import javax.swing.*;
@@ -16,6 +16,8 @@ import javax.swing.border.TitledBorder;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Tag;
 import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
+
+import java.io.*;
 
 /**
  * @author Andreas Kielkopf
@@ -84,18 +86,68 @@ public class Manage extends JPanel {
    private JButton getBtn_load() {
       if (btn_load == null) {
          btn_load=new JButton("load");
+         btn_load.addActionListener(_ -> load());
          btn_load.setEnabled(false);
          btn_load.setToolTipText("lade Daten von disk");
       }
       return btn_load;
    }
+   /**
+    * 
+    */
+   protected void load() {
+      if (smartmeter instanceof Smartmeter sm) {
+         Thread t=new Thread(() -> {
+            try (ObjectInputStream ois=new ObjectInputStream(Files.newInputStream(//
+                     Paths.get(getField_Path().getText(), sm.getFilename()), //
+                     StandardOpenOption.READ))) {
+               if (ois.readObject() instanceof Smartmeter sm2) {
+                  SwingUtilities.invokeLater(() -> {
+                     setSmartmeter(sm2);
+                     Display.setSmartmeter(sm2);
+                     DefaultListModel<Tag> lm=getListModel();
+                     lm.clear();
+                     for (Tag tag:sm2.getTage())
+                        lm.addElement(tag);
+                  });
+               }
+            } catch (IOException | ClassNotFoundException e) {
+               System.err.println("konnte nicht laden");
+               System.err.println(e.getLocalizedMessage());
+            }
+         });
+         t.setDaemon(true);
+         t.start();
+      }
+   }
    private JButton getBtn_save() {
       if (btn_save == null) {
          btn_save=new JButton("save");
+         btn_save.addActionListener(_ -> save());
          btn_save.setEnabled(false);
          btn_save.setToolTipText("Speichre Daten auf disk");
       }
       return btn_save;
+   }
+   /**
+    * Speichere den aktuellen smartmeter auf disk
+    */
+   protected void save() {
+      if (smartmeter instanceof Smartmeter sm && !sm.getTagesListe().isEmpty()) {
+         Thread t=new Thread(() -> {
+            try (ObjectOutputStream oos=new ObjectOutputStream(Files.newOutputStream(//
+                     Paths.get(getField_Path().getText(), sm.getFilename()), //
+                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+               oos.writeObject(sm);
+               System.out.println("save completed");
+            } catch (IOException e) {
+               System.err.println("konnte nicht speichern");
+               System.err.println(e.getLocalizedMessage());
+            }
+         });
+         t.setDaemon(true);
+         t.start();
+      }
    }
    private JButton getBtn_read() {
       if (btn_read == null) {
@@ -274,6 +326,8 @@ public class Manage extends JPanel {
          getField_Name().setText(smartmeter_.getName());
          getField_Name().setEnabled(true);
          getBtn_read().setEnabled(true);
+         getBtn_load().setEnabled(true);
+         getBtn_save().setEnabled(true);
       } else {
          getBtn_read().setEnabled(false);
          getField_Name().setText("------------");
