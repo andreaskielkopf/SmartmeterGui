@@ -5,6 +5,7 @@ package de.uhingen.kielkopf.andreas.smartmetergui.http;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.*;
 import java.net.http.*;
 import java.net.http.HttpRequest.Builder;
@@ -21,7 +22,7 @@ import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
  * @author Andreas Kielkopf
  *
  */
-public class Client {
+public class Client implements Serializable {
    // Fensterposition x;
    static private HttpClient client;   // gemeinsam
    static private Builder    builder;  // gemeinsam
