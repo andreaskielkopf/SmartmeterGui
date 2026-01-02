@@ -11,6 +11,7 @@ import java.net.http.HttpRequest.Builder;
 
 import javax.swing.*;
 
+import de.uhingen.kielkopf.andreas.smartmetergui.Display;
 import de.uhingen.kielkopf.andreas.smartmetergui.Manage;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
 
@@ -90,26 +91,28 @@ public class Client {
     * @param btn_test
     * @return
     */
-   public static void testSmartmeter(JFormattedTextField field_IP, JButton btn_Test, Manage manage) {
-      if (field_IP.getValue() instanceof InetAddress ip) {
-         btn_Test.setBackground(Color.YELLOW);
-         if (isSmartmeter(ip)) {
-            btn_Test.setBackground(Color.GREEN);
-            System.out.println("Smartmeter bei " + ip + " gefunden");
-            try {
-               manage.setSmartmeter(new Smartmeter(ip));
-            } catch (URISyntaxException e) {
-               e.printStackTrace();
-            }
-         } else {
-            btn_Test.setBackground(Color.RED);
-            System.err.println("KEIN Smartmeter bei " + ip + " gefunden");
-         }
-      } else {
-         btn_Test.setBackground(Manage.DEFAULT_BUTTON_BACKGROUND);
-         btn_Test.setEnabled(false);
-      }
-   }
+   // public static void testSmartmeter(JFormattedTextField field_IP, JButton btn_Test, Manage manage) {
+   // if (field_IP.getValue() instanceof InetAddress ip) {
+   // btn_Test.setBackground(Color.YELLOW);
+   // if (isSmartmeter(ip)) {
+   // btn_Test.setBackground(Color.GREEN);
+   // System.out.println("Smartmeter bei " + ip + " gefunden");
+   // try {
+   // Smartmeter smartm_=new Smartmeter(ip);
+   // Display.setSmartmeter(smartm_);
+   // manage.setSmartmeter(smartm_);
+   // } catch (URISyntaxException e) {
+   // e.printStackTrace();
+   // }
+   // } else {
+   // btn_Test.setBackground(Color.RED);
+   // System.err.println("KEIN Smartmeter bei " + ip + " gefunden");
+   // }
+   // } else {
+   // btn_Test.setBackground(Manage.DEFAULT_BUTTON_BACKGROUND);
+   // btn_Test.setEnabled(false);
+   // }
+   // }
    /**
     * @param ip
     * @return
@@ -161,20 +164,20 @@ public class Client {
     * @return
     */
    public static void test(Manage manage) {
-      // System.out.println(manage);
       if (manage instanceof Manage m) {
          JButton bTest=m.getBtn_Test();
          if (m.getField_IP().getValue() instanceof InetAddress ip) {
             bTest.setBackground(Color.YELLOW);
-            Thread t=new Thread(() -> {
-               // try {
+            Thread t=new Thread(() -> { // try {
                boolean isSmartmeter=isSmartmeter(ip);
                SwingUtilities.invokeLater(() -> {
                   try {
                      if (isSmartmeter) {
                         bTest.setBackground(Color.GREEN);
                         System.out.println("Smartmeter bei " + ip + " gefunden");
-                        m.setSmartmeter(new Smartmeter(ip));
+                        Smartmeter smart_=new Smartmeter(ip);
+                        Display.setSmartmeter(smart_);
+                        m.setSmartmeter(smart_);
                      } else {
                         bTest.setBackground(Color.RED);
                         System.err.println("KEIN Smartmeter bei " + ip + " gefunden");
@@ -183,9 +186,7 @@ public class Client {
                      System.err.println(e.getMessage());
                   }
                });
-               // } catch (InterruptedException e) {
-               // System.err.println(e.getMessage());
-               // }
+               // } catch (InterruptedException e) { System.err.println(e.getMessage());}
             });
             t.setDaemon(true);
             t.start();

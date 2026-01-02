@@ -17,7 +17,7 @@ public class Gui {
    private JLabel      info;
    private JTabbedPane tabbedPane;
    private Manage      manage;
-   private JPanel      panel_2;
+   private Display     display;
    private JPanel      panel_3;
    /**
     * Launch the application.
@@ -68,19 +68,11 @@ public class Gui {
       }
       return info;
    }
-   // private class JTabbedPane2 extends JTabbedPane {
-   // public JTabbedPane2(int top) {
-   // super(top);
-   // }
-   // public void addTab(Component component) {
-   // addTab(component.getName(), component);
-   // }
-   // }
    private JTabbedPane getTabbedPane() {
       if (tabbedPane == null) {
          tabbedPane=new JTabbedPane(JTabbedPane.TOP);
          tabbedPane.addTab(getManage().getName(), getManage());
-         tabbedPane.addTab("New tab", null, getPanel_2(), null);
+         tabbedPane.addTab(getDisplay().getName(), getDisplay());
          tabbedPane.addTab("New tab", null, getPanel_3(), null);
       }
       return tabbedPane;
@@ -91,11 +83,11 @@ public class Gui {
       }
       return manage;
    }
-   private JPanel getPanel_2() {
-      if (panel_2 == null) {
-         panel_2=new JPanel();
+   private Display getDisplay() {
+      if (display == null) {
+         display=new Display();
       }
-      return panel_2;
+      return display;
    }
    private JPanel getPanel_3() {
       if (panel_3 == null) {
