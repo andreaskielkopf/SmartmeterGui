@@ -9,7 +9,8 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.swing.*;
 
@@ -21,12 +22,12 @@ import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
  *
  */
 public class Smartmeter implements Serializable {
-   private static final long serialVersionUID=-1026838884840481195L;
-   private final InetAddress ip;
-   private Client            client;
-   private String            name;
-   private TreeSet<Tag>      speicher;
-   private Manage            manage;
+   private static final long                  serialVersionUID=-1026838884840481195L;
+   private final InetAddress                  ip;
+   private Client                             client;
+   private String                             name;
+   private ConcurrentSkipListMap<String, Tag> speicher;                              // Keys ist gleichzeitig eine Liste der Namen der Tage
+   transient private Manage                   manage;
    /**
     * kompletter Datensatz eines Smartmrters
     * 
@@ -35,7 +36,7 @@ public class Smartmeter implements Serializable {
    public Smartmeter(InetAddress ip_) throws URISyntaxException {
       ip=ip_;
       name=ip.toString();
-      speicher=new TreeSet<>();
+      speicher=new ConcurrentSkipListMap<>();
       client=new Client(ip);
    }
    public String getName() {
@@ -48,12 +49,7 @@ public class Smartmeter implements Serializable {
     */
    public void setName(String name_) {
       this.name=name_;
-   }
-   static final public void save() {}
-   /**
-    * Lädt die Daten aus der Datei als Basisdaten
-    */
-   final public static void load() {}
+   }  
    /**
     * @param jListModel
     */
@@ -103,18 +99,19 @@ public class Smartmeter implements Serializable {
          for (String ticks:takte)
             summe+=Integer.parseInt(ticks);
          if (summe > 0) {
-            Tag testTag=new Tag(jahr + "-" + monat + "-" + tag);
-            boolean hinzugefuegt=speicher.add(testTag); // nur wenn nicht schon da
+            String n=jahr + "-" + monat + "-" + tag;
+            boolean vorhanden=speicher.containsKey(n);
+            if (!vorhanden)
+               speicher.put(n, new Tag(n));
+            Tag t=speicher.get(n);
             try {
-               if (speicher.floor(testTag) instanceof Tag t) {
-                  t.add(new Stunde(stunde, takte));
-                  if (hinzugefuegt)
-                     return t; // Erfolg und bitte in die GUI eintragen!!!
-                  return null;// Erfolg aber schon vorhanden !!!
-               }
+               t.add(new Stunde(stunde, takte));
+               if (!vorhanden)
+                  return t; // Erfolg und bitte in die GUI eintragen!!!
+               return null;// Erfolg aber schon vorhanden !!!
             } catch (NumberFormatException _) { /* */ }
-            if (hinzugefuegt)// Ein Tag ohne Stunden wird nicht eingetragen
-               speicher.remove(testTag);
+            if (t.istLeer())// Ein Tag ohne Stunden wird nicht eingetragen
+               speicher.remove(t);
          }
       } catch (NumberFormatException _) { /* */ }
       return null;
@@ -153,5 +150,21 @@ public class Smartmeter implements Serializable {
    public String toString() {
       return new StringBuilder().append(getClass().getSimpleName()).append("(").append(getName()).append(")")
                .toString();
+   }
+   /**
+    * @return
+    */
+   public NavigableSet<String> getTagesListe() {
+      return speicher.keySet();
+   }
+   /**
+    * @return
+    */
+   public String getFilename() {
+      String a=getClass().getSimpleName() + name;
+      return a.replaceAll("/", "_");
+   }
+   public Collection<Tag> getTage() {
+      return speicher.values();
    }
 }
