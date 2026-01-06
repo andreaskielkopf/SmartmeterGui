@@ -150,9 +150,7 @@ public class Client implements Serializable {
     * @throws IOException
     */
    public String anfrage(String pfad) throws IOException, InterruptedException {
-      URI uri=basisUri.resolve(pfad);
-      // System.out.println(uri);
-      HttpRequest request=builder.uri(uri).build();
+      HttpRequest request=builder.uri(basisUri.resolve(pfad)).build();
       HttpResponse<String> response=client.send(request, HttpResponse.BodyHandlers.ofString());
       if (response.statusCode() != 200) {
          System.out.println(response.statusCode());

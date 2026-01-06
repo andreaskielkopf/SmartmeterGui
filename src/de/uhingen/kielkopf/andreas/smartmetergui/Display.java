@@ -3,19 +3,16 @@
  */
 package de.uhingen.kielkopf.andreas.smartmetergui;
 
-import java.awt.BorderLayout;
-
-import de.uhingen.kielkopf.andreas.smartmetergui.beans.TagSpinner;
-import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
-
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
-import java.awt.Color;
+
+import de.uhingen.kielkopf.andreas.smartmetergui.beans.TagSpinner;
+import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
+import de.uhingen.kielkopf.andreas.smartmetergui.data.Tag;
 
 /**
  * @author Andreas Kielkopf
@@ -34,13 +31,13 @@ public class Display extends JPanel {
    private JPanel         panel_5;
    private JPanel         panel_6;
    private JLabel         lblNewLabel;
-   private TagSpinner     tagSpinner1;
-   private JSpinner       spinner_1;
+   private TagSpinner     spinTag1;
+   private JSpinner       spinStunde1;
    private JLabel         lblNewLabel_1;
-   private TagSpinner     tagSpinner2;
-   private JSpinner       spinner_3;
+   private TagSpinner     spinTag2;
+   private JSpinner       spinStunde2;
    private JLabel         lblNewLabel_2;
-   private JTextField     textField;
+   private JTextField     field_maxticks;
    private JButton        btnNewButton;
    public Display() {
       initialize();
@@ -68,8 +65,8 @@ public class Display extends JPanel {
       smartmeter=sm_;
       getField_Name().setText(smartmeter.getName());
       getField_Name().setEnabled(true);
-      getTagSpinner1().getTSM().setSmartmeter(sm_);
-      getTagSpinner2().getTSM().setSmartmeter(sm_);
+      getSpinTag1().getTSM().setSmartmeter(sm_);
+      getSpinTag2().getTSM().setSmartmeter(sm_);
    }
    private JPanel getPanel_1() {
       if (panel_1 == null) {
@@ -131,14 +128,14 @@ public class Display extends JPanel {
          panel_5.setBorder(new TitledBorder(null, "Auswahl:", TitledBorder.LEADING, TitledBorder.TOP, null, null));
          panel_5.setLayout(new GridLayout(3, 3, 10, 5));
          panel_5.add(getLblNewLabel());
-         panel_5.add(getTagSpinner1());
-         panel_5.add(getSpinner_1());
+         panel_5.add(getSpinTag1());
+         panel_5.add(getSpinStunde1());
          panel_5.add(getLblNewLabel_1());
-         panel_5.add(getTagSpinner2());
-         panel_5.add(getSpinner_3());
+         panel_5.add(getSpinTag2());
+         panel_5.add(getSpinStunde2());
          panel_5.add(getBtnNewButton());
          panel_5.add(getLblNewLabel_2());
-         panel_5.add(getTextField());
+         panel_5.add(getField_maxticks());
       }
       return panel_5;
    }
@@ -162,17 +159,31 @@ public class Display extends JPanel {
       }
       return lblNewLabel;
    }
-   private TagSpinner getTagSpinner1() {
-      if (tagSpinner1 == null) {
-         tagSpinner1=new TagSpinner();
+   public TagSpinner getSpinTag1() {
+      if (spinTag1 == null) {
+         spinTag1=new TagSpinner();
+         spinTag1.addChangeListener(_ -> recalculateMax());
       }
-      return tagSpinner1;
+      return spinTag1;
    }
-   private JSpinner getSpinner_1() {
-      if (spinner_1 == null) {
-         spinner_1=new JSpinner(new SpinnerListModel(STUNDEN));
+   /**
+    * 
+    */
+   protected void recalculateMax() {
+      JTextField ticks=getField_maxticks();
+      ticks.setText("");
+      if (smartmeter instanceof Smartmeter sm)
+         if (getSpinTag1().getValue() instanceof String datum)
+            if (sm.getTag(datum) instanceof Tag tag)
+               ticks.setText(Integer.toString(tag.getMaxticks()));
+   }
+   public JSpinner getSpinStunde1() {
+      if (spinStunde1 == null) {
+         spinStunde1=new JSpinner(new SpinnerListModel(STUNDEN));
+         spinStunde1.setEnabled(false);
+         spinStunde1.addChangeListener(_ -> recalculateMax());
       }
-      return spinner_1;
+      return spinStunde1;
    }
    private JLabel getLblNewLabel_1() {
       if (lblNewLabel_1 == null) {
@@ -181,13 +192,15 @@ public class Display extends JPanel {
       }
       return lblNewLabel_1;
    }
-   private TagSpinner getTagSpinner2() {
-      if (tagSpinner2 == null) {
-         tagSpinner2=new TagSpinner();
+   public TagSpinner getSpinTag2() {
+      if (spinTag2 == null) {
+         spinTag2=new TagSpinner();
+         spinTag2.setEnabled(false);
+         spinTag2.addChangeListener(_ -> recalculateMax());
       }
-      return tagSpinner2;
+      return spinTag2;
    }
-   final static private List STUNDEN=Arrays.asList("00", "01", "02", "03", "04", "05", "06", "07", "08", "09",   //
+   final static private List<String> STUNDEN=Arrays.asList("00", "01", "02", "03", "04", "05", "06", "07", "08", "09",   //
             "10", "11", "12", "13", "14", "15", "16", "17", "18", "19",                                          //
             "20", "21", "22", "23");
    private JPanel            panel_7;
@@ -206,12 +219,15 @@ public class Display extends JPanel {
    private JScrollPane       scrollPane;
    private JLabel            lblX;
    private JLabel            lblY;
-   private JPanel            grafik;
-   private JSpinner getSpinner_3() {
-      if (spinner_3 == null) {
-         spinner_3=new JSpinner(new SpinnerListModel(STUNDEN));
+   private Grafik            grafik;
+   private Grafik            g;
+   public JSpinner getSpinStunde2() {
+      if (spinStunde2 == null) {
+         spinStunde2=new JSpinner(new SpinnerListModel(STUNDEN));
+         spinStunde2.setEnabled(false);
+         spinStunde2.addChangeListener(_ -> recalculateMax());
       }
-      return spinner_3;
+      return spinStunde2;
    }
    private JLabel getLblNewLabel_2() {
       if (lblNewLabel_2 == null) {
@@ -220,12 +236,12 @@ public class Display extends JPanel {
       }
       return lblNewLabel_2;
    }
-   private JTextField getTextField() {
-      if (textField == null) {
-         textField=new JTextField();
-         textField.setColumns(10);
+   public JTextField getField_maxticks() {
+      if (field_maxticks == null) {
+         field_maxticks=new JTextField();
+         field_maxticks.setColumns(10);
       }
-      return textField;
+      return field_maxticks;
    }
    private JButton getBtnNewButton() {
       if (btnNewButton == null) {
@@ -336,9 +352,15 @@ public class Display extends JPanel {
    }
    private JScrollPane getScrollPane() {
       if (scrollPane == null) {
-         scrollPane=new JScrollPane(getGrafik());
-         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+         g=getGrafik();
+         scrollPane=new JScrollPane(g);
+         // scrollPane.setColumnHeaderView(g.zeit);
+         // scrollPane.setRowHeaderView(g.verbrauch);
+         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
          scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+         // scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER, buttonCorner);
+         // scrollPane.setCorner(JScrollPane.LOWER_LEFT_CORNER, new Corner());
+         // scrollPane.setCorner(JScrollPane.UPPER_RIGHT_CORNER, new Corner());
       }
       return scrollPane;
    }
@@ -358,12 +380,17 @@ public class Display extends JPanel {
       }
       return lblY;
    }
-   private JPanel getGrafik() {
+   private Grafik getGrafik() {
       if (grafik == null) {
-         grafik=new JPanel();
+         grafik=new Grafik(this);
          grafik.setBackground(new Color(255, 250, 205));
-         grafik.setLayout(new BorderLayout(0, 0));
       }
       return grafik;
+   }
+   /**
+    * @return
+    */
+   public Smartmeter getSmartmeter() {
+      return smartmeter;
    }
 }

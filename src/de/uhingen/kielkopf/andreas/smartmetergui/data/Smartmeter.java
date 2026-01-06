@@ -9,7 +9,7 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import javax.swing.*;
@@ -49,18 +49,23 @@ public class Smartmeter implements Serializable {
     */
    public void setName(String name_) {
       this.name=name_;
-   }  
+   }
    /**
     * @param jListModel
     */
    public void read() {
       if (manage instanceof Manage m && m.getListModel() instanceof DefaultListModel<Tag> lm) {
+         m.enableButtons(false);
          Thread t=new Thread(() -> {
             try {
                read(lm);
             } catch (InterruptedException e) {
                System.err.println(e.getMessage());
             }
+            SwingUtilities.invokeLater(() -> {
+               m.enableButtons(true);
+               m.getList().updateUI();
+            });
          });
          t.setDaemon(true);
          t.start();
@@ -69,22 +74,23 @@ public class Smartmeter implements Serializable {
    private void read(DefaultListModel<Tag> jListModel) throws InterruptedException {
       // setInfo("start to read " + toString());
       int year=Instant.now().atOffset(ZoneOffset.UTC).getYear();
-      for (int jahr=year - 10; jahr <= year; jahr++)
-         try {
-            if (getAntwort(jahr) instanceof String[] monate)
-               for (String monat:monate)
-                  if (getAntwort(jahr, monat) instanceof String[] tage)
-                     for (String tag:tage)
-                        if (getAntwort(jahr, monat, tag) instanceof String[] stunden)
-                           for (String stunde:stunden)
-                              if (getAntwort(jahr, monat, tag, stunde) instanceof String[] minuten) {
-                                 if (eintragen(jahr, monat, tag, stunde, minuten) instanceof Tag t
-                                          && jListModel instanceof DefaultListModel<Tag> jlt)
-                                    SwingUtilities.invokeLater(() -> jlt.addElement(t));
-                              }
-         } catch (IOException e) {
-            System.err.println(e.getMessage());
-         }
+      for (int jahr=year - 2; jahr <= year; jahr++)
+         if (jahr > 2025)
+            try {
+               if (getAntwort(jahr) instanceof String[] monate)
+                  for (String monat:monate)
+                     if (getAntwort(jahr, monat) instanceof String[] tage)
+                        for (String tag:tage)
+                           if (getAntwort(jahr, monat, tag) instanceof String[] stunden)
+                              for (String stunde:stunden)
+                                 if (getAntwort(jahr, monat, tag, stunde) instanceof String[] minuten) {
+                                    if (eintragen(jahr, monat, tag, stunde, minuten) instanceof Tag t
+                                             && jListModel instanceof DefaultListModel<Tag> jlt)
+                                       SwingUtilities.invokeLater(() -> jlt.addElement(t));
+                                 }
+            } catch (IOException e) {
+               System.err.println(e.getMessage());
+            }
    }
    /**
     * @param jahr
@@ -99,19 +105,19 @@ public class Smartmeter implements Serializable {
          for (String ticks:takte)
             summe+=Integer.parseInt(ticks);
          if (summe > 0) {
-            String n=jahr + "-" + monat + "-" + tag;
-            boolean vorhanden=speicher.containsKey(n);
+            String datum=jahr + "-" + monat + "-" + tag;
+            boolean vorhanden=speicher.containsKey(datum);
             if (!vorhanden)
-               speicher.put(n, new Tag(n));
-            Tag t=speicher.get(n);
+               speicher.put(datum, new Tag(datum));
+            Tag t=speicher.get(datum);
             try {
-               t.add(new Stunde(stunde, takte));
+               t.add(new Stunde(stunde, takte, t.tzOffsetMin));
                if (!vorhanden)
                   return t; // Erfolg und bitte in die GUI eintragen!!!
                return null;// Erfolg aber schon vorhanden !!!
             } catch (NumberFormatException _) { /* */ }
             if (t.istLeer())// Ein Tag ohne Stunden wird nicht eingetragen
-               speicher.remove(t);
+               speicher.remove(datum);
          }
       } catch (NumberFormatException _) { /* */ }
       return null;
@@ -164,7 +170,14 @@ public class Smartmeter implements Serializable {
       String a=getClass().getSimpleName() + name;
       return a.replaceAll("/", "_");
    }
-   public Collection<Tag> getTage() {
-      return speicher.values();
+   public ConcurrentSkipListMap<String, Tag> getTage() {
+      return speicher;
+   }
+   /**
+    * @param datum
+    * @return
+    */
+   public Tag getTag(String datum) {
+      return speicher.get(datum);
    }
 }

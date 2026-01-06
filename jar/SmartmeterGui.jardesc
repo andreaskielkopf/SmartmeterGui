@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="SmartmeterGui/jar/SmartmeterGui.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/SmartmeterGui/jar/SmartmeterGui.jardesc" exportErrors="false" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" mainClassHandleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui{Gui.java[Gui" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="true">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.http{Client.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui{Display.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.data{Drawable.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui{Gui.java"/>
+        <file path="/SmartmeterGui/jar/SmartmeterGui.jardesc"/>
+        <file path="/SmartmeterGui/readme.md"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui{Manage.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.data{Smartmeter.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.data{Stunde.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.data{Tag.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.beans{TagSpinner.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui.data{Tick.java"/>
+        <javaElement handleIdentifier="=SmartmeterGui/src&lt;de.uhingen.kielkopf.andreas.smartmetergui{Grafik.java"/>
+    </selectedElements>
+</jardesc>

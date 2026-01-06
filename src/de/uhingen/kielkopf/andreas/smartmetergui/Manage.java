@@ -4,6 +4,7 @@
 package de.uhingen.kielkopf.andreas.smartmetergui;
 
 import java.awt.*;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.*;
@@ -16,8 +17,6 @@ import javax.swing.border.TitledBorder;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Tag;
 import de.uhingen.kielkopf.andreas.smartmetergui.http.Client;
-
-import java.io.*;
 
 /**
  * @author Andreas Kielkopf
@@ -83,7 +82,7 @@ public class Manage extends JPanel {
       }
       return knoepfe;
    }
-   private JButton getBtn_load() {
+   public JButton getBtn_load() {
       if (btn_load == null) {
          btn_load=new JButton("load");
          btn_load.addActionListener(_ -> load());
@@ -97,6 +96,7 @@ public class Manage extends JPanel {
     */
    protected void load() {
       if (smartmeter instanceof Smartmeter sm) {
+         enableButtons(false);
          Thread t=new Thread(() -> {
             try (ObjectInputStream ois=new ObjectInputStream(Files.newInputStream(//
                      Paths.get(getField_Path().getText(), sm.getFilename()), //
@@ -107,7 +107,7 @@ public class Manage extends JPanel {
                      Display.setSmartmeter(sm2);
                      DefaultListModel<Tag> lm=getListModel();
                      lm.clear();
-                     for (Tag tag:sm2.getTage())
+                     for (Tag tag:sm2.getTage().values())
                         lm.addElement(tag);
                   });
                }
@@ -115,12 +115,13 @@ public class Manage extends JPanel {
                System.err.println("konnte nicht laden");
                System.err.println(e.getLocalizedMessage());
             }
+            SwingUtilities.invokeLater(() -> enableButtons(true));
          });
          t.setDaemon(true);
          t.start();
       }
    }
-   private JButton getBtn_save() {
+   public JButton getBtn_save() {
       if (btn_save == null) {
          btn_save=new JButton("save");
          btn_save.addActionListener(_ -> save());
@@ -134,6 +135,7 @@ public class Manage extends JPanel {
     */
    protected void save() {
       if (smartmeter instanceof Smartmeter sm && !sm.getTagesListe().isEmpty()) {
+         enableButtons(false);
          Thread t=new Thread(() -> {
             try (ObjectOutputStream oos=new ObjectOutputStream(Files.newOutputStream(//
                      Paths.get(getField_Path().getText(), sm.getFilename()), //
@@ -143,13 +145,20 @@ public class Manage extends JPanel {
             } catch (IOException e) {
                System.err.println("konnte nicht speichern");
                System.err.println(e.getLocalizedMessage());
+               e.printStackTrace();
             }
+            SwingUtilities.invokeLater(() -> enableButtons(true));
          });
          t.setDaemon(true);
          t.start();
       }
    }
-   private JButton getBtn_read() {
+   public void enableButtons(boolean enable) {
+      getBtn_load().setEnabled(enable);
+      getBtn_save().setEnabled(enable);
+      getBtn_read().setEnabled(enable);
+   }
+   public JButton getBtn_read() {
       if (btn_read == null) {
          btn_read=new JButton("read Smartmeter");
          btn_read.setEnabled(false);
@@ -195,7 +204,7 @@ public class Manage extends JPanel {
       }
       return scrollPane;
    }
-   private JList<Tag> getList() {
+   public JList<Tag> getList() {
       if (list == null) {
          list=new JList<>(getListModel());
          list.setFont(new Font("Noto Sans", Font.BOLD, 14));

@@ -3,10 +3,12 @@
  */
 package de.uhingen.kielkopf.andreas.smartmetergui.beans;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.NavigableSet;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import javax.swing.*;
+import javax.swing.AbstractSpinnerModel;
+import javax.swing.JSpinner;
 
 import de.uhingen.kielkopf.andreas.smartmetergui.data.Smartmeter;
 
